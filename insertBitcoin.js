@@ -1,13 +1,31 @@
 const sqlite3 = require('sqlite3').verbose();
 const yahooFinance = require('yahoo-finance2').default;
 
-const symbols = ['BTC-USD', 'BTC-JPY'];
+let symbols = [];
 
 const db = new sqlite3.Database('db/sqlite.db', (err) => {
     if (err) return console.error('❌ 無法連線到資料庫:', err.message);
     console.log('✅ 已連線 SQLite 資料庫');
-    processNextSymbol(0);
+
+    db.all("SELECT symbol FROM currencies", (err, rows) => {
+        if (err) {
+            console.error("❌ 無法讀取 currencies 表:", err.message);
+            db.close();
+            return;
+        }
+
+        if (!rows.length) {
+            console.warn("⚠️ 資料庫中尚未設定任何幣別，請先新增");
+            db.close();
+            return;
+        }
+
+        symbols = rows.map(r => r.symbol);
+        console.log("📥 將處理以下幣別:", symbols);
+        processNextSymbol(0);
+    });
 });
+
 
 function processNextSymbol(index) {
     if (index >= symbols.length) {
@@ -40,12 +58,10 @@ function processNextSymbol(index) {
 
             try {
                 const today = new Date();
-                const tenYearsAgo = new Date();
-                tenYearsAgo.setFullYear(today.getFullYear() - 10);
+                const startDate = new Date('1970-01-01'); // 極早的日期以抓取所有資料
 
-                console.log(`⏳ 正在抓取 ${symbol} 的歷史資料...`);
                 const result = await yahooFinance.historical(symbol, {
-                    period1: tenYearsAgo,
+                    period1: startDate,
                     period2: today,
                     interval: '1d'
                 });

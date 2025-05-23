@@ -5,6 +5,7 @@ var logger = require('morgan');
 
 var indexRouter = require('./routes/index');
 var usersRouter = require('./routes/users');
+const {exec} = require("child_process");
 
 var app = express();
 
@@ -33,24 +34,135 @@ const db = new sqlite3.Database(dbPath, (err) => {
 });
 
 // API 路由：根據 query string 的 currency 參數查表
-app.get('/api/gold', (req, res) => {
+app.get('/api/bitcoin', (req, res) => {
     const currency = req.query.currency?.toLowerCase();
+    const start = req.query.start; // e.g., '2020-01-01'
+    const end = req.query.end;     // e.g., '2023-12-31'
+    const order = req.query.order?.toLowerCase() === 'asc' ? 'ASC' : 'DESC';
 
-    if (!currency || !['usd', 'jpy'].includes(currency)) {
-        return res.status(400).json({ error: '請提供有效的 currency（usd 或 jpy）' });
+    if (!currency) {
+        return res.status(400).json({ error: '請提供 currency 參數' });
     }
 
-    const tableName = `btc_${currency}_prices`;
-
-    db.all(`SELECT * FROM ${tableName}`, (err, rows) => {
+    // 從 currencies 表中確認該幣別是否存在
+    db.get("SELECT symbol FROM currencies WHERE symbol LIKE ?", [`%-${currency.toUpperCase()}`], (err, row) => {
         if (err) {
             console.error(err.message);
+            return res.status(500).json({ error: '資料庫錯誤' });
+        }
+
+        if (!row) {
+            return res.status(400).json({ error: '無效的幣別（未在 currencies 表中註冊）' });
+        }
+
+        const tableName = `btc_${currency}_prices`;
+        const params = [];
+        let query = `SELECT * FROM ${tableName} WHERE 1=1`;
+
+        if (start) {
+            query += ` AND date >= ?`;
+            params.push(start);
+        }
+
+        if (end) {
+            query += ` AND date <= ?`;
+            params.push(end);
+        }
+
+        query += ` ORDER BY date ${order}`;
+
+        db.all(query, params, (err, rows) => {
+            if (err) {
+                console.error(err.message);
+                return res.status(500).json({ error: '資料庫錯誤' });
+            }
+            res.json(rows);
+        });
+    });
+});
+
+app.get('/api/update-bitcoin', (req, res) => {
+    exec('node insertBitcoin.js', (error, stdout, stderr) => {
+        if (error) {
+            console.error(`執行失敗: ${error.message}`);
+            return res.status(500).json({ error: '執行 insertBitcoin.js 失敗' });
+        }
+        console.log(`stdout: ${stdout}`);
+        res.json({ message: '✅ 資料更新完成' });
+    });
+});
+
+
+
+
+const yahooFinance = require('yahoo-finance2').default;
+
+app.post('/api/add-currency', async (req, res) => {
+    const { symbol, label } = req.body;
+
+    if (!symbol || !label) {
+        return res.status(400).json({ error: 'symbol 與 label 為必填' });
+    }
+
+    // 先驗證該幣別是否能抓到資料
+    try {
+        const today = new Date();
+        const past = new Date();
+        past.setFullYear(today.getFullYear() - 1); // 抓近一年來看有無資料
+
+        const testData = await yahooFinance.historical(symbol, {
+            period1: past,
+            period2: today,
+            interval: '1d',
+        });
+
+        if (!Array.isArray(testData) || testData.length === 0) {
+            return res.status(400).json({ error: `Yahoo Finance 無法取得 ${symbol} 的歷史資料` });
+        }
+    } catch (err) {
+        console.error(`❌ 無法抓取 ${symbol}：`, err.message);
+        return res.status(400).json({ error: `Yahoo Finance 無法取得 ${symbol} 的資料` });
+    }
+
+    // 建立 currencies 表（如不存在）
+    db.run(`CREATE TABLE IF NOT EXISTS currencies (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    symbol TEXT UNIQUE,
+    label TEXT
+  )`, (err) => {
+        if (err) {
+            console.error('❌ 建立 currencies 表失敗:', err.message);
+            return res.status(500).json({ error: '建立 currencies 表失敗' });
+        }
+
+        // 插入幣別
+        db.run(`INSERT OR IGNORE INTO currencies (symbol, label) VALUES (?, ?)`, [symbol, label], (err) => {
+            if (err) {
+                console.error('❌ 寫入幣別失敗:', err.message);
+                return res.status(500).json({ error: '寫入幣別失敗' });
+            }
+
+            // 呼叫 insertBitcoin.js 加入歷史資料
+            exec('node insertBitcoin.js', (error, stdout, stderr) => {
+                if (error) {
+                    console.error(`執行失敗: ${error.message}`);
+                    return res.status(500).json({ error: '執行 insertBitcoin.js 失敗' });
+                }
+                console.log(`stdout: ${stdout}`);
+                res.json({ message: `✅ 已新增 ${label}（${symbol}）並建立資料表` });
+            });
+        });
+    });
+});
+
+app.get('/api/currencies', (req, res) => {
+    db.all("SELECT symbol, label FROM currencies", (err, rows) => {
+        if (err) {
+            console.error("❌ 查詢 currencies 失敗:", err.message);
             return res.status(500).json({ error: '資料庫錯誤' });
         }
         res.json(rows);
     });
 });
-
-
 
 module.exports = app;
