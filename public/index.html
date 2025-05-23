@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <title>比特幣價格平台</title>
+    <style>
+        body {
+            background-color: #1e1f3f;
+            color: #f5f7fa;
+            font-family: "Segoe UI", Roboto, Arial, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            margin: 0;
+        }
+
+        h1 {
+            color: #64b5f6;
+            margin-bottom: 40px;
+        }
+
+        .button-container {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            width: 260px;
+        }
+
+        button {
+            padding: 15px;
+            font-size: 16px;
+            border: none;
+            border-radius: 10px;
+            background-image: linear-gradient(to right, #42a5f5, #7e57c2);
+            color: #fff;
+            font-weight: bold;
+            cursor: pointer;
+            transition: transform 0.2s, background 0.3s;
+        }
+
+        button:hover {
+            background-image: linear-gradient(to right, #7e57c2, #ab47bc);
+            transform: scale(1.05);
+        }
+
+        #loading {
+            display: none;
+            margin-top: 20px;
+            color: #ffcc80;
+            font-style: italic;
+            animation: blink 1s infinite;
+        }
+
+        #statusMessage {
+            margin-top: 10px;
+            font-weight: bold;
+            color: #a5d6a7;
+        }
+
+        @keyframes blink {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.3; }
+        }
+    </style>
+</head>
+<body>
+
+<h1>📊 比特幣價格平台</h1>
+
+<div class="button-container">
+    <button onclick="location.href='viewer.html'">📈 查看比特幣價格</button>
+    <button onclick="updateBitcoinData()">🔄 更新比特幣資料</button>
+    <button onclick="location.href='add-currency.html'">➕ 新增幣別資料</button>
+</div>
+
+<div id="loading">⏳ 正在更新資料，請稍候...</div>
+<div id="statusMessage"></div>
+
+<script>
+    async function updateBitcoinData() {
+        // const confirmed = confirm('是否確認立即更新比特幣歷史價格？');
+        // if (!confirmed) return;
+
+        const loading = document.getElementById('loading');
+        const status = document.getElementById('statusMessage');
+        loading.style.display = 'block';
+        status.textContent = '';
+
+        try {
+            const res = await fetch('/api/update-bitcoin');
+            const result = await res.json();
+            status.textContent = result.message || '✅ 資料更新完成';
+        } catch (err) {
+            status.textContent = '❌ 更新失敗，請稍後再試';
+            status.style.color = '#ef5350';
+            console.error(err);
+        } finally {
+            loading.style.display = 'none';
+        }
+    }
+</script>
+
+</body>
+</html>

@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <title>新增幣別資料</title>
+    <style>
+        body {
+            background-color: #1e1f3f;
+            color: #f5f7fa;
+            font-family: "Segoe UI", Roboto, Arial, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            margin: 0;
+        }
+
+        h1 {
+            color: #64b5f6;
+            margin-bottom: 30px;
+        }
+
+        form {
+            background-color: #2e3350;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.5);
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            width: 300px;
+        }
+
+        label {
+            font-weight: bold;
+            color: #cfd8dc;
+        }
+
+        input, select {
+            padding: 8px;
+            border-radius: 6px;
+            border: none;
+            background-color: #1e1f3f;
+            color: #fff;
+        }
+
+        button {
+            padding: 10px;
+            border: none;
+            border-radius: 8px;
+            background-image: linear-gradient(to right, #42a5f5, #7e57c2);
+            color: #fff;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background-image: linear-gradient(to right, #7e57c2, #ab47bc);
+        }
+
+        #status {
+            margin-top: 15px;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+<h1>➕ 新增幣別資料</h1>
+<form onsubmit="submitCurrency(event)">
+    <label for="symbol">幣別代碼（如 BTC-USD）</label>
+    <input type="text" id="symbol" name="symbol" required />
+
+    <label for="label">顯示名稱</label>
+    <input type="text" id="label" name="label" placeholder="如：USD（美元）" required />
+
+    <button type="submit">新增</button>
+    <div id="status"></div>
+</form>
+
+<script>
+    async function submitCurrency(event) {
+        event.preventDefault();
+        const symbol = document.getElementById('symbol').value.trim();
+        const label = document.getElementById('label').value.trim();
+        const status = document.getElementById('status');
+
+        if (!symbol || !label) {
+            status.textContent = '❌ 所有欄位皆為必填';
+            status.style.color = '#ef5350';
+            return;
+        }
+
+        status.textContent = '⏳ 新增中...';
+        status.style.color = '#ffcc80';
+
+        try {
+            const res = await fetch('/api/add-currency', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ symbol, label })
+            });
+
+            const result = await res.json();
+            if (res.ok) {
+                status.textContent = '✅ 新增成功';
+                status.style.color = '#a5d6a7';
+                document.getElementById('symbol').value = '';
+                document.getElementById('label').value = '';
+            } else {
+                status.textContent = `❌ 錯誤：${result.error || '請稍後再試'}`;
+                status.style.color = '#ef5350';
+            }
+        } catch (err) {
+            console.error(err);
+            status.textContent = '❌ 無法連線到伺服器';
+            status.style.color = '#ef5350';
+        }
+    }
+</script>
+</body>
+</html>
