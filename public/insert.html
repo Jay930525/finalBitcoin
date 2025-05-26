@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <title>新增比特幣價格資料</title>
+    <style>
+        body {
+            background-color: #1e1f3f;
+            color: #f5f7fa;
+            font-family: "Segoe UI", Roboto, Arial, sans-serif;
+            padding: 20px;
+        }
+        h1 {
+            color: #64b5f6;
+        }
+        form {
+            max-width: 600px;
+            margin-top: 20px;
+        }
+        .form-row {
+            display: flex;
+            align-items: center;
+            margin-bottom: 12px;
+        }
+        label {
+            width: 140px;
+            margin-right: 10px;
+            font-weight: bold;
+            color: #cfd8dc;
+        }
+        input, select {
+            flex: 1;
+            padding: 8px 12px;
+            border: none;
+            border-radius: 6px;
+            background-color: #2e3350;
+            color: #fff;
+        }
+        button {
+            margin-top: 20px;
+            padding: 10px 20px;
+            font-size: 16px;
+            border: none;
+            border-radius: 6px;
+            background-color: #3b3e5a;
+            color: #fff;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+        button:hover {
+            background-color: #5f77ff;
+        }
+        #message {
+            margin-top: 20px;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+<h1>📤 新增比特幣價格資料</h1>
+
+<form id="dataForm">
+    <div class="form-row">
+        <label>選擇幣別</label>
+        <select id="currencySelect" name="symbol" required></select>
+    </div>
+
+    <div class="form-row">
+        <label>日期</label>
+        <input type="date" name="date" required>
+    </div>
+
+    <div class="form-row">
+        <label>開盤價</label>
+        <input type="number" name="open" step="0.01" required>
+    </div>
+
+    <div class="form-row">
+        <label>收盤價</label>
+        <input type="number" name="close" step="0.01" required>
+    </div>
+
+    <div class="form-row">
+        <label>最高價</label>
+        <input type="number" name="high" step="0.01" required>
+    </div>
+
+    <div class="form-row">
+        <label>最低價</label>
+        <input type="number" name="low" step="0.01" required>
+    </div>
+
+    <div class="form-row">
+        <label>成交量</label>
+        <input type="number" name="volume" step="0.01" required>
+    </div>
+
+    <div class="form-row">
+        <label>漲跌幅 (%)</label>
+        <input type="number" name="change_percent" step="0.01" required>
+    </div>
+
+    <button type="submit">➕ 送出資料</button>
+</form>
+
+<div id="message"></div>
+
+<script>
+    // 載入幣別選單
+    async function loadCurrencies() {
+        const res = await fetch('/api/currencies');
+        const data = await res.json();
+        const select = document.getElementById('currencySelect');
+
+        data.forEach(c => {
+            const option = document.createElement('option');
+            option.value = c.symbol;
+            option.textContent = `${c.label} (${c.symbol})`;
+            select.appendChild(option);
+        });
+    }
+
+    // 表單送出
+    document.getElementById('dataForm').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const form = e.target;
+        const formData = new FormData(form);
+        const jsonData = Object.fromEntries(formData.entries());
+
+        const res = await fetch('/api/addNewData', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(jsonData)
+        });
+
+        const result = await res.json();
+        const msg = document.getElementById('message');
+        msg.textContent = result.message || '送出完成';
+        msg.style.color = result.success ? '#66bb6a' : '#ef5350';
+    });
+
+    loadCurrencies();
+</script>
+</body>
+</html>

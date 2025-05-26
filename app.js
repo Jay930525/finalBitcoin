@@ -96,7 +96,6 @@ app.get('/api/update-bitcoin', (req, res) => {
 
 
 const yahooFinance = require('yahoo-finance2').default;
-
 app.post('/api/add-currency', async (req, res) => {
     const { symbol, label } = req.body;
 
@@ -126,10 +125,10 @@ app.post('/api/add-currency', async (req, res) => {
 
     // 建立 currencies 表（如不存在）
     db.run(`CREATE TABLE IF NOT EXISTS currencies (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    symbol TEXT UNIQUE,
-    label TEXT
-  )`, (err) => {
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        symbol TEXT UNIQUE,
+        label TEXT
+    )`, (err) => {
         if (err) {
             console.error('❌ 建立 currencies 表失敗:', err.message);
             return res.status(500).json({ error: '建立 currencies 表失敗' });
@@ -164,5 +163,45 @@ app.get('/api/currencies', (req, res) => {
         res.json(rows);
     });
 });
+
+
+
+app.post('/api/addNewData', (req, res) => {
+    const { symbol, date, close, open, high, low, volume, change_percent } = req.body;
+
+    if (!symbol || !date || close === undefined || open === undefined ||
+        high === undefined || low === undefined || volume === undefined || change_percent === undefined) {
+        return res.status(400).json({ success: false, error: '❌ 缺少必要欄位' });
+    }
+
+    db.get("SELECT symbol FROM currencies WHERE symbol = ?", [symbol], (err, row) => {
+        if (err) {
+            console.error("❌ 查詢 currencies 失敗:", err.message);
+            return res.status(500).json({ success: false, error: '資料庫錯誤' });
+        }
+
+        if (!row) {
+            return res.status(400).json({ success: false, message: '❌ 此 symbol 不存在於 currencies 表中' });
+        }
+
+        const currency = symbol.split('-')[1].toLowerCase(); // BTC-USD -> usd
+        const tableName = `btc_${currency}_prices`;
+
+        db.run(`
+      INSERT OR IGNORE INTO ${tableName} 
+      (date, close, open, high, low, volume, change_percent)
+      VALUES (?, ?, ?, ?, ?, ?, ?)
+    `,
+            [date, close, open, high, low, volume, change_percent],
+            (err) => {
+                if (err) {
+                    console.error("❌ 插入資料失敗:", err.message);
+                    return res.status(500).json({ success: false, error: '插入資料失敗' });
+                }
+                res.json({ success: true, message: '✅ 新資料已成功新增' });
+            });
+    });
+});
+
 
 module.exports = app;
