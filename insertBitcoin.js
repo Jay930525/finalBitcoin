@@ -60,11 +60,13 @@ function processNextSymbol(index) {
                 const today = new Date();
                 const startDate = new Date('1970-01-01'); // 極早的日期以抓取所有資料
 
-                const result = await yahooFinance.historical(symbol, {
+                const data = await yahooFinance.chart(symbol, {
                     period1: startDate,
                     period2: today,
                     interval: '1d'
                 });
+
+                const result = data.quotes;
 
                 console.log(`📈 已取得 ${result.length} 筆 ${symbol} 的資料。`);
 

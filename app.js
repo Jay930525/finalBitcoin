@@ -109,12 +109,13 @@ app.post('/api/add-currency', async (req, res) => {
         const past = new Date();
         past.setFullYear(today.getFullYear() - 1); // 抓近一年來看有無資料
 
-        const testData = await yahooFinance.historical(symbol, {
+        const result = await yahooFinance.chart(symbol, {
             period1: past,
             period2: today,
             interval: '1d',
         });
 
+        const testData = result.quotes;
         if (!Array.isArray(testData) || testData.length === 0) {
             return res.status(400).json({ error: `Yahoo Finance 無法取得 ${symbol} 的歷史資料` });
         }
