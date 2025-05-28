@@ -91,7 +91,7 @@
         status.textContent = '';
 
         try {
-            const res = await fetch('/api/update-bitcoin');
+            const res = await fetch('../api/update-bitcoin');
             const result = await res.json();
             status.textContent = result.message || '✅ 資料更新完成';
         } catch (err) {

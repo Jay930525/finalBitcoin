@@ -95,7 +95,7 @@
         status.style.color = '#ffcc80';
 
         try {
-            const res = await fetch('/api/add-currency', {
+            const res = await fetch('../api/add-currency', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ symbol, label })

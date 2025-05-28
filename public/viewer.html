@@ -130,7 +130,7 @@
   async function loadCurrencies() {
     const select = document.getElementById('currencySelect');
     try {
-      const res = await fetch('/api/currencies');
+      const res = await fetch('../api/currencies');
       const data = await res.json();
       select.innerHTML = '';
       data.forEach(item => {

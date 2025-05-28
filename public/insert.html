@@ -108,7 +108,7 @@
 <script>
     // 載入幣別選單
     async function loadCurrencies() {
-        const res = await fetch('/api/currencies');
+        const res = await fetch('../api/currencies');
         const data = await res.json();
         const select = document.getElementById('currencySelect');
 
@@ -127,7 +127,7 @@
         const formData = new FormData(form);
         const jsonData = Object.fromEntries(formData.entries());
 
-        const res = await fetch('/api/addNewData', {
+        const res = await fetch('../api/addNewData', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(jsonData)
