@@ -178,17 +178,17 @@
     </tr></thead><tbody>`;
 
     data.forEach((row, index) => {
-      const rowClass = row.change_percent >= 0 ? 'positive' : 'negative';
+      const rowClass = (typeof row.change_percent === 'number' && row.change_percent >= 0) ? 'positive' : 'negative';
       html += `<tr class="${rowClass}">
-        <td>${index + 1}</td>
-        <td>${row.date}</td>
-        <td>${row.open.toLocaleString()}</td>
-        <td>${row.close.toLocaleString()}</td>
-        <td>${row.high.toLocaleString()}</td>
-        <td>${row.low.toLocaleString()}</td>
-        <td>${row.volume.toLocaleString()}</td>
-        <td>${row.change_percent.toFixed(2)}%</td>
-      </tr>`;
+    <td>${index + 1}</td>
+    <td>${row.date}</td>
+    <td>${row.open?.toLocaleString?.() ?? '-'}</td>
+    <td>${row.close?.toLocaleString?.() ?? '-'}</td>
+    <td>${row.high?.toLocaleString?.() ?? '-'}</td>
+    <td>${row.low?.toLocaleString?.() ?? '-'}</td>
+    <td>${row.volume?.toLocaleString?.() ?? '-'}</td>
+    <td>${typeof row.change_percent === 'number' ? row.change_percent.toFixed(2) + '%' : '-'}</td>
+  </tr>`;
     });
 
     html += `</tbody></table>`;
