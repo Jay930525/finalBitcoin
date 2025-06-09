@@ -236,6 +236,48 @@ app.post('/api/addNewData', (req, res) => {
 });
 
 
+app.post('/api/delete-data', (req, res) => {
+    const { table, id } = req.body;
+
+    if (!table || !id) {
+        return res.status(400).json({ success: false, error: '缺少 table 或 date 參數' });
+    }
+
+    const sql = `DELETE FROM ${table} WHERE id = ?`;
+
+    db.run(sql, [id], function (err) {
+        if (err) {
+            console.error('❌ 刪除失敗:', err.message);
+            return res.status(500).json({ success: false, error: '刪除失敗' });
+        }
+        return res.json({ success: true, message: '✅ 刪除成功' });
+    });
+});
+
+
+app.post('/api/update-data', (req, res) => {
+    const { table, id, date, open, close, high, low, volume, change_percent } = req.body;
+
+    if (!table || !id) {
+        return res.status(400).json({ success: false, error: '缺少 table 或 id' });
+    }
+
+    const sql = `
+        UPDATE ${table}
+        SET date = ?, open = ?, close = ?, high = ?, low = ?, volume = ?, change_percent = ?
+        WHERE id = ?
+    `;
+
+    db.run(sql, [date, open, close, high, low, volume, change_percent, id], function (err) {
+        if (err) {
+            console.error('❌ 更新失敗:', err.message);
+            return res.status(500).json({ success: false, error: '更新失敗' });
+        }
+        return res.json({ success: true, message: '✅ 更新成功' });
+    });
+});
+
+
 
 app.post('/login', async (req, res) => {
     const { user_name, password } = req.body;

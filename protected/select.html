@@ -170,8 +170,8 @@
     <a class='active' href="/protected/select.html">查看資料</a>
     <a href="/protected/add-currency.html">新增幣別</a>
     <a href="/protected/update-data.html">更新資料</a>
-    <a href="/protected/insert-data.html">手動插入</a>
-    <a href="/protected/delete-data.html">刪除資料</a>
+    <a href="/protected/insert-data.html">手動新增資料</a>
+    <a href="/protected/manage-data.html">資料管理</a>
 </div>
 
 <div class="navbar">
@@ -265,6 +265,7 @@
             const data = await res.json();
             tbody.innerHTML = '';
             data.forEach(row => {
+                // console.log(row);
                 const tr = document.createElement('tr');
                 tr.innerHTML = `
                 <td>${row.date}</td>

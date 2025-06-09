@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8">
+  <title>更新比特幣資料</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;700&display=swap');
+    body {
+      font-family: 'Noto Sans TC', sans-serif;
+      margin: 0;
+      padding: 0;
+      background-color: #1e1f26;
+      color: #f5f5f5;
+    }
+    .sidebar {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 200px;
+      height: 100vh;
+      background-color: #2b2c38;
+      padding-top: 80px;
+      text-align: center;
+      box-shadow: 2px 0 6px rgba(0, 0, 0, 0.5);
+    }
+    .sidebar a {
+      display: block;
+      padding: 15px 0;
+      text-decoration: none;
+      color: #f5f5f5;
+    }
+    .sidebar a:hover,
+    .sidebar a.active {
+      background-color: #f7931a;
+      color: #1e1f26;
+      font-weight: bold;
+    }
+    .navbar {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 60px;
+      background-color: #2b2c38;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 0 30px;
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.4);
+      z-index: 10;
+    }
+    .navbar h1 {
+      color: #f7931a;
+      font-size: 20px;
+      cursor: pointer;
+    }
+    .navbar button {
+      background-color: #f7931a;
+      color: #1e1f26;
+      border: none;
+      padding: 8px 14px;
+      font-weight: bold;
+      border-radius: 6px;
+      cursor: pointer;
+    }
+    .navbar button:hover {
+      background-color: #ffa733;
+    }
+    .main {
+      margin-left: 200px;           /* 預留 sidebar 寬度 */
+      padding-top: 10px;            /* 預留 navbar 高度 */
+      display: flex;
+      flex-direction: column;
+      align-items: center;          /* 卡片置中對齊 */
+      justify-content: center;
+      min-height: calc(100vh - 80px);
+    }
+    .main h2 {
+      color: #f7931a;
+      margin-bottom: 0px;
+    }
+    .main button {
+      padding: 12px 30px;
+      font-size: 18px;
+      font-weight: bold;
+      background-color: #f7931a;
+      color: #1e1f26;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+    }
+    .main button:hover {
+      background-color: #ffa733;
+    }
+    #loading {
+      margin-top: 20px;
+      color: #f7931a;
+      display: none;
+    }
+    #result {
+      margin-top: 20px;
+      font-weight: bold;
+    }
+
+    .card {
+      background-color: #2b2c38;
+      padding: 30px;
+      border-radius: 12px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.4);
+      text-align: center;
+      margin-top: 30px;
+    }
+
+    .card p {
+      margin-bottom: 20px;
+      font-size: 16px;
+      color: #f5f5f5;
+    }
+
+    button {
+      padding: 10px 20px;
+      background-color: #f7931a;
+      color: #1e1f26;
+      font-weight: bold;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 16px;
+    }
+
+    button:hover {
+      background-color: #ffa733;
+    }
+
+    .status {
+      text-align: center;
+      margin-top: 20px;
+      font-weight: bold;
+    }
+  </style>
+</head>
+<body>
+<div class="sidebar">
+  <a href="/protected/select.html">查看資料</a>
+  <a href="/protected/add-currency.html">新增幣別</a>
+  <a href="/protected/update-data.html" class="active">更新資料</a>
+  <a href="/protected/insert-data.html">手動新增資料</a>
+  <a href="/protected/manage-data.html">資料管理</a>
+</div>
+
+<div class="navbar">
+  <h1 onclick="window.location.href='/protected/admin.html'">Bitcoin 後台管理</h1>
+  <button onclick="logout()">登出</button>
+</div>
+
+
+<div class="main">
+  <h2>更新比特幣資料</h2>
+
+  <div class="card">
+    <p class="form-group">
+      ⚠️ 請注意：此操作將刪除資料庫中所有幣別的歷史資料表，並重新建立。<br><br>
+      系統將從 Yahoo Finance 抓取每個幣別近一年的歷史價格資料，重新寫入至資料表。<br>
+      根據幣別數量與資料大小，此過程可能花費數秒至數分鐘不等。<br><br>
+      若您確定要執行，請點擊下方的「立即更新」按鈕。
+    </p>
+    <button onclick="updateData()">立即更新</button>
+
+    <div id="loading" class="status" style="display: none;">⏳ 資料更新中，請稍候...</div>
+    <div id="result" class="status"></div>
+
+  </div>
+</div>
+
+<script>
+  function logout() {
+    fetch('/logout', { method: 'POST' })
+            .then(() => window.location.href = '/login.html')
+            .catch(() => alert('❌ 登出失敗'));
+  }
+
+  async function updateData() {
+    const loading = document.getElementById('loading');
+    const result = document.getElementById('result');
+    loading.style.display = 'block';
+    result.textContent = '';
+
+    try {
+      const res = await fetch('/api/update-bitcoin');
+      const data = await res.json();
+      loading.style.display = 'none';
+
+      if (res.ok) {
+        result.textContent = data.message;
+        result.style.color = 'lightgreen';
+      } else {
+        result.textContent = '❌ ' + (data.error || '更新失敗');
+        result.style.color = 'red';
+      }
+    } catch (err) {
+      loading.style.display = 'none';
+      result.textContent = '❌ 無法連接伺服器';
+      result.style.color = 'red';
+    }
+  }
+</script>
+</body>
+</html>
