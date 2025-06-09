@@ -96,16 +96,16 @@
 
 <div>
   <label>幣別</label>
-  <select id="currencySelect"></select>
+  <select id="currencySelect" onchange="fetchData()"></select>
 
   <label>開始日期</label>
-  <input type="date" id="startDate">
+  <input type="date" id="startDate" onchange="fetchData()">
 
   <label>結束日期</label>
-  <input type="date" id="endDate">
+  <input type="date" id="endDate" onchange="fetchData()">
 
   <label>排序</label>
-  <select id="orderSelect">
+  <select id="orderSelect" onchange="fetchData()">
     <option value="desc">由新到舊</option>
     <option value="asc">由舊到新</option>
   </select>
