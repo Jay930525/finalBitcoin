@@ -359,7 +359,7 @@ app.get('/protected/:page', requireLogin, (req, res) => {
 app.post('/logout', (req, res) => {
     req.session.destroy((err) => {
         if (err) {
-            console.error('登出失敗：', err);
+            // console.error('登出失敗：', err);
             return res.status(500).json({ error: '登出失敗' });
         }
         res.json({ message: '已登出' });
