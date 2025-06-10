@@ -220,7 +220,7 @@ app.post('/api/addNewData', (req, res) => {
         const tableName = `btc_${currency}_prices`;
 
         db.run(`
-      INSERT OR IGNORE INTO ${tableName} 
+      INSERT INTO ${tableName} 
       (date, close, open, high, low, volume, change_percent)
       VALUES (?, ?, ?, ?, ?, ?, ?)
     `,

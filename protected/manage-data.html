@@ -301,8 +301,12 @@
       // 啟用編輯模式（跳過 id 欄位）
       [...row.children].slice(1, 8).forEach(td => td.contentEditable = true);
       btn.textContent = '送出';
+      row.style.backgroundColor = '#fff3cd'; // 淡黃色背景
+      row.style.color = 'black'; // 黑色文字
     } else {
       // 收集資料
+      row.style.backgroundColor = '';
+      row.style.color = '';
       const [date, open, close, high, low, volume, changePercentRaw] =
               [...row.children].slice(0, 7).map(td => td.textContent.trim());
 
