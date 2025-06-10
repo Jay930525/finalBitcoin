@@ -2,7 +2,7 @@
 <html lang="zh-Hant">
 <head>
   <meta charset="UTF-8">
-  <title>新增幣別</title>
+  <title>刪除幣別</title>
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;700&display=swap');
     .sidebar {
@@ -66,23 +66,21 @@
       font-family: 'Noto Sans TC', sans-serif;
       color: #f5f5f5;
     }
-
     .main {
-      margin-left: 200px;           /* 預留 sidebar 寬度 */
-      padding-top: 20px;            /* 預留 navbar 高度 */
+      margin-left: 200px;
+      padding-top: 20px;
       display: flex;
       flex-direction: column;
-      align-items: center;          /* 卡片置中對齊 */
+      align-items: center;
       justify-content: center;
       min-height: calc(100vh - 80px);
     }
-
-    h1 {
-      color: #f7931a;
+    h2.title {
+      text-align: center;
       font-size: 28px;
-      margin-bottom: 20px;
+      margin-bottom: 30px;
+      color: #f7931a;
     }
-
     .card {
       background-color: #2b2c38;
       padding: 40px 30px;
@@ -91,20 +89,16 @@
       width: 90%;
       max-width: 480px;
     }
-
     .form-group {
+      margin-bottom: 25px;
       display: flex;
       flex-direction: column;
-      margin-bottom: 25px;
     }
-
     .form-group label {
       font-weight: bold;
       margin-bottom: 8px;
-      font-size: 16px;
     }
-
-    .form-group input {
+    .form-group select {
       padding: 12px;
       border: none;
       border-radius: 8px;
@@ -113,11 +107,6 @@
       font-size: 16px;
       border: 2px solid #f7931a;
     }
-
-    .form-group input::placeholder {
-      color: #999;
-    }
-
     .btn-submit {
       width: 100%;
       padding: 14px;
@@ -130,30 +119,21 @@
       cursor: pointer;
       transition: background 0.3s;
     }
-
     .btn-submit:hover {
       background-image: linear-gradient(to right, #ffb74d, #f7931a);
     }
-
     .result {
       margin-top: 20px;
       text-align: center;
       font-size: 16px;
-    }
-
-    h2.title {
-      text-align: center;
-      font-size: 28px;
-      margin-bottom: 30px;
-      color: #f7931a;
     }
   </style>
 </head>
 <body>
 <div class="sidebar">
   <a href="/protected/select.html">查看資料</a>
-  <a href="/protected/add-currency.html" class="active">新增幣別</a>
-  <a href="/protected/delete-currency.html">刪除幣別</a>
+  <a href="/protected/add-currency.html">新增幣別</a>
+  <a href="/protected/delete-currency.html" class="active">刪除幣別</a>
   <a href="/protected/update-data.html">更新資料</a>
   <a href="/protected/insert-data.html">手動新增資料</a>
   <a href="/protected/manage-data.html">資料管理</a>
@@ -165,61 +145,63 @@
 </div>
 
 <div class="main">
-  <h2 class="title">＋ 新增幣別資料</h2>
+  <h2 class="title">🗑️ 刪除幣別</h2>
 
   <div class="card">
     <div class="form-group">
-      <label for="symbol">幣別代碼（如 BTC-USD）</label>
-      <input type="text" id="symbol" placeholder="請輸入幣別代碼">
+      <label for="currencySelect">選擇要刪除的幣別</label>
+      <select id="currencySelect"></select>
     </div>
 
-    <div class="form-group">
-      <label for="label">顯示名稱</label>
-      <input type="text" id="label" placeholder="如：USD（美元）">
-    </div>
-
-    <button class="btn-submit" onclick="addCurrency()">新增</button>
-
+    <button class="btn-submit" onclick="deleteCurrency()">刪除幣別</button>
     <div class="result" id="result"></div>
   </div>
 </div>
 
-
-
 <script>
-  async function addCurrency() {
-    const symbol = document.getElementById('symbol').value.trim();
-    const label = document.getElementById('label').value.trim();
-    const result = document.getElementById('result');
-
-    if (!symbol || !label) {
-      result.textContent = '❌ 請填寫所有欄位';
-      result.style.color = 'red';
-      return;
-    }
-
-    try {
-      result.textContent = '⏳ 新增中，請稍候...';
-      result.style.color = '#f7931a';
-
-      const res = await fetch('/api/add-currency', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ symbol, label })
-      });
-      const data = await res.json();
-      if (res.ok) {
-        result.textContent = data.message;
-        result.style.color = 'lightgreen';
-      } else {
-        result.textContent = '❌ ' + (data.error || '新增失敗');
-        result.style.color = 'red';
-      }
-    } catch (err) {
-      result.textContent = '❌ 無法連接伺服器';
-      result.style.color = 'red';
+  async function logout() {
+    const res = await fetch('/logout', { method: 'POST' });
+    const data = await res.json();
+    if (data.message) {
+      location.href = '/login.html';
     }
   }
+
+  async function loadCurrencies() {
+    const select = document.getElementById('currencySelect');
+    try {
+      const res = await fetch('/api/currencies');
+      const data = await res.json();
+      select.innerHTML = '';
+      data.forEach(item => {
+        const option = document.createElement('option');
+        option.value = item.symbol;
+        option.textContent = item.label;
+        select.appendChild(option);
+      });
+    } catch (err) {
+      console.error('❌ 載入幣別失敗:', err);
+      select.innerHTML = '<option>載入錯誤</option>';
+    }
+  }
+
+  async function deleteCurrency() {
+    const symbol = document.getElementById('currencySelect').value;
+    if (!confirm(`是否確定要刪除幣別：${symbol}？此操作不可復原！`)) return;
+
+    const res = await fetch('/api/delete-currency', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ symbol })
+    });
+    const result = await res.json();
+    document.getElementById('result').textContent = result.message || result.error;
+    if (result.success) {
+      loadCurrencies();
+    }
+  }
+
+  loadCurrencies();
 </script>
 </body>
 </html>

@@ -185,6 +185,36 @@ app.post('/api/add-currency', async (req, res) => {
 });
 
 
+app.post('/api/delete-currency', (req, res) => {
+    const { symbol } = req.body;
+
+    if (!symbol) {
+        return res.status(400).json({ success: false, error: '❌ 缺少 symbol 參數' });
+    }
+
+    // 從 symbol 中解析出 table 名稱（如 BTC-USD → btc_usd_prices）
+    const currency = symbol.split('-')[1]?.toLowerCase();
+    const tableName = `btc_${currency}_prices`;
+
+    db.run("DELETE FROM currencies WHERE symbol = ?", [symbol], function (err) {
+        if (err) {
+            console.error('❌ 無法從 currencies 表中刪除:', err.message);
+            return res.status(500).json({ success: false, error: '刪除 currencies 失敗' });
+        }
+
+        // 嘗試刪除對應的價格資料表
+        db.run(`DROP TABLE IF EXISTS ${tableName}`, (err) => {
+            if (err) {
+                console.error(`⚠️ 價格資料表 ${tableName} 刪除失敗:`, err.message);
+                return res.status(500).json({ success: false, error: '價格資料表刪除失敗' });
+            }
+
+            return res.json({ success: true, message: `✅ 已成功刪除 ${symbol} 及其資料表` });
+        });
+    });
+});
+
+
 
 app.get('/api/currencies', (req, res) => {
     db.all("SELECT symbol, label FROM currencies", (err, rows) => {
@@ -276,7 +306,6 @@ app.post('/api/update-data', (req, res) => {
         return res.json({ success: true, message: '✅ 更新成功' });
     });
 });
-
 
 
 app.post('/login', async (req, res) => {
